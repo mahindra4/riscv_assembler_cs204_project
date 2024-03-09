@@ -576,21 +576,49 @@ void R(string instruction) {
         func7["div"] = "0000001";
         func7["rem"] = "0000001";
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
-  
+
     //==========> Split the instruction into segments and store them in a map
     map<string, string> instructionmap;
-    stringstream ss(instruction);
-    string oper, rd, rs1, rs2;
-    ss >> oper >> rd >> rs1 >> rs2;
-    instructionmap["operator"] = oper;
-    instructionmap["rd"] = rd;
-    instructionmap["rs1"] = rs1;
-    instructionmap["rs2"] = rs2;
 
-    // =========>Get register numbers
-    int register1 = stoi(instructionmap["rs1"].substr(1));
-    int register2 = stoi(instructionmap["rs2"].substr(1));
-    int destination = stoi(instructionmap["rd"].substr(1));
+    string oper;
+    int i = 0, j = 0;
+    while (j < instruction.size() && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+    oper = instruction.substr(i, j - i);
+    while (j < instruction.size() && instruction[j] != 'x') {
+        j++;
+    }
+    i = j + 1;
+    while (j < instruction.size() && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+        
+        int destination = stoi(instruction.substr(i, j - i)); 
+       
+   
+
+    while (j < instruction.size() && instruction[j] != 'x') {
+        j++;
+    }
+    i = j + 1;
+    while (j < instruction.size() && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+        
+       int register1 = stoi(instruction.substr(i, j - i)); 
+       
+   
+
+   j = instruction.size()-1;
+    while(j>=0 && (instruction[j]!=' ' && instruction[j]!=',')){
+        j--;
+    }
+    string label = instruction.substr(j+1,instruction.size()-j-1); 
+    
+    int register2=stoi(label.substr(1));
+
+    instructionmap["operator"] = oper;
 
     //============> Convert register numbers to bitsets
     bitset<5> a1(register1);
