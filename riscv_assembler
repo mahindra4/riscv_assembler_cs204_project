@@ -360,7 +360,182 @@ bool I(string s,ofstream &file){
         //file<<p<<endl;
     return true;
 }
+// Function to convert the r-format instruction to machine code
+bool R(string instruction,ofstream &file) {
+    //-->creating maps
+    map<string, string> opcode;
+    map<string, string> func3;
+    map<string, string> func7;
 
+    //--->for opcode
+    opcode["add"] = "0110011";
+    opcode["sub"] = "0110011";
+    opcode["sll"] = "0110011";
+    opcode["slt"] = "0110011";
+    opcode["sltu"] = "0110011";
+    opcode["xor"] = "0110011";
+    opcode["srl"] = "0110011";
+    opcode["sra"] = "0110011";
+    opcode["or"] = "0110011";
+    opcode["and"] = "0110011";
+    opcode["addw"] = "0111011";
+    opcode["subw"] = "0111011";
+    opcode["sllw"] = "0111011";
+    opcode["srlw"] = "0111011";
+    opcode["sraw"] = "0111011";
+    opcode["mul"] = "0110011";
+    opcode["div"] = "0110011";
+    opcode["rem"] = "0110011";
+
+    //--->for function3
+    func3["add"] = "000";
+    func3["sub"] = "000";
+    func3["sll"] = "001";
+    func3["slt"] = "010";
+    func3["sltu"] = "011";
+    func3["xor"] = "100";
+    func3["srl"] = "101";
+    func3["sra"] = "101";
+    func3["or"] = "110";
+    func3["and"] = "111";
+    func3["addw"] = "000";
+    func3["subw"] = "000";
+    func3["sllw"] = "001";
+    func3["srlw"] = "010";
+    func3["sraw"] = "011";
+    func3["mul"] = "000";
+    func3["div"] = "100";
+    func3["rem"] = "110";
+
+    //--->for function7
+    func7["add"] = "0000000";
+    func7["sub"] = "0100000";
+    func7["sll"] = "0000000";
+    func7["slt"] = "0000000";
+    func7["sltu"] = "0000000";
+    func7["xor"] = "0000000";
+    func7["srl"] = "0000000";
+    func7["sra"] = "0100000";
+    func7["or"] = "0000000";
+    func7["and"] = "0000000";
+    func7["addw"] = "0000000";
+    func7["subw"] = "0100000";
+    func7["sllw"] = "0000000";
+    func7["srlw"] = "0000000";
+    func7["sraw"] = "0100000";
+    func7["mul"] = "0000001";
+    func7["div"] = "0000001";
+    func7["rem"] = "0000001";
+    //==========> Split the instruction into segments and store them in a map
+    map<string, string> instructionmap;
+    int xcount =  count(instruction.begin(),instruction.end(),'x');
+    
+    if(xcount!=3){
+        
+        return false;
+    }
+
+   int i = 0, j = 0;
+    string oper;
+    int size = instruction.size();
+    int register1, register2, destination;
+    bool foul1,foul2,foul3;
+
+    while (j < size && (instruction[j] == ' ' || instruction[j] == ',')) {
+        j++;
+    }
+    
+
+    i = j;
+
+    while (j < size && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+    
+    oper = instruction.substr(i, j - i);
+    
+    while (j < size && !isalpha(instruction[j])) {
+        j++;
+    }
+    
+    i = j;
+
+    while (j < size && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+       
+     foul1 = is_int((instruction.substr(i+1, j - i-1)));
+     try{
+    destination = stoi((instruction.substr(i+1, j - i-1)));
+    }
+       catch(const invalid_argument &e){
+        return false;
+       }
+    
+    
+    while (j < size && !isalpha(instruction[j])) {
+        j++;
+    }
+
+    i = j;
+
+    while (j < size && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+      
+       foul2= is_int((instruction.substr(i+1, j - i-1)));
+       try{
+        register1 = stoi(instruction.substr(i+1, j - i));
+       }
+       catch(const invalid_argument &e){
+        return false;
+       }
+
+    
+    while (j < size && !isalpha(instruction[j])) {
+        j++;
+    }
+
+    i = j;
+
+    while (j < size && (instruction[j] != ' ' && instruction[j] != ',')) {
+        j++;
+    }
+        
+     foul3 = is_int((instruction.substr(i+1, j - i-1)));
+     try{
+    register2 = stoi(instruction.substr(i+1, j - i));
+   }
+       catch(const invalid_argument &e){
+        return false;
+       }
+   
+    if(register1>=32||register2>=32|| destination>=32){
+        return false;
+    }
+
+
+    instructionmap["operator"] = oper;
+
+    //============> Convert register numbers to bitsets
+    bitset<5> a1(register1);
+    bitset<5> a2(register2);
+    bitset<5> a3(destination);
+
+    // Concatenate all the strings to form a binary string
+    string output = func7[oper] + a2.to_string() + a1.to_string() + func3[oper] + a3.to_string() + opcode[oper];
+
+    // Convert the binary string to hexadecimal machine code
+   
+    if(!(foul1 &&foul2 &&foul3)){
+        return false;
+    }
+
+    string machinecode = binaryToHex(output);
+    file<<machinecode<<endl;
+
+    return true;
+}
 
 bool S(string s,ofstream &file){
     int n = s.length();
