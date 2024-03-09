@@ -49,3 +49,562 @@ string bit_to_hex(bitset<32> b){
     }
     return ans;
 }
+bool SB(string instruction,int &pc,ofstream &file){
+    string opcode = "1100011";
+    map<string,string> f3;
+    f3["beq"] = "000";
+    f3["bne"] = "001";
+    f3["blt"] = "100";
+    f3["bge"] = "101";
+    int i=0,j=0;
+    int n = instruction.size();
+    while(j<instruction.size() && (instruction[j]!=' ' && instruction[j]!=',')){
+        j++;
+    }
+    string type = instruction.substr(i,j-i); // type of the instruction ex: beq,blt...
+    if(j==n){
+        return false;
+    }
+    while(j<instruction.size() && instruction[j]!='x'){
+        if(instruction[j]!=' ' && instruction[j]!=','){
+            return false;
+        }
+        j++;
+    }
+    if(j==n){
+        return false;
+    }
+    i = j+1;
+    while(j<instruction.size() && (instruction[j]!=' ' && instruction[j]!=',')){
+        j++;
+    }
+    if(!is_int(instruction.substr(i,j-i))) return false;
+    int r1 = stoi(instruction.substr(i,j-i)); // registor 1
+    if(r1>31 && r1<0){
+        return false;
+    }
+    while(j<instruction.size() && instruction[j]!='x'){
+        if(instruction[j]!=' ' && instruction[j]!=','){
+            return false;
+        }
+        j++;
+    }
+    if(j==n){
+        return false;
+    }
+    i = j+1;
+    while(j<instruction.size() && (instruction[j]!=' ' &&  instruction[j]!=',')){
+        j++;
+    }
+    if(!is_int(instruction.substr(i,j-i))) return false;
+    int r2 = stoi(instruction.substr(i,j-i)); // registor 2
+    if(r2>31 && r2<0){
+        return false;
+    }
+    j = instruction.size()-1;
+    while(j>=0 && (instruction[j]!=' ' && instruction[j]!=',')){
+        j--;
+    }
+    string label = instruction.substr(j+1,instruction.size()-j-1); // label of the instruction
+    bool is_int = true;
+    i = 0;
+    if(label[0]=='-'){
+        i = 1;
+    }
+    for(;i<label.size();i++){
+        int d = label[i]-'0';
+        if(d>9 || d<0){
+            is_int = false;
+            break;
+        }
+    }
+    int offset = 0;
+    if(is_int){
+        offset = stoi(label);
+    }
+    else{
+        if(labels.find(label)==labels.end()){
+            return false;
+        }
+        else{
+            offset = (labels[label]-pc)<<2;
+        }
+    }
+
+    if(offset>4095 || offset<-4096){
+        return false;
+    }
+
+    bitset<32> machine_code(opcode);
+    bitset<32> imm(offset);
+    machine_code[7] = imm[11];
+    for(int i=8;i<12;i++){
+        machine_code[i] = imm[i-7];
+    }
+    bitset<3> func3(f3[type]);
+    for(int i=12;i<15;i++){
+        machine_code[i] = func3[i-12];
+    }
+    bitset<5> rs1(r1),rs2(r2);
+    for(int i=15;i<20;i++){
+        machine_code[i] = rs1[i-15];
+    }
+    for(int i=20;i<25;i++){
+        machine_code[i] = rs2[i-20];
+    }
+    for(int i=25;i<31;i++){
+        machine_code[i] = imm[i-20];
+    }
+    machine_code[31] = imm[20];
+    string machine_instruction = "0x";
+    int sum = 0;
+    for(int i=31;i>=0;i--){
+        sum = 2*sum+machine_code[i];
+        if(i%4==0){
+            machine_instruction += convert(sum);
+            sum=0;
+        }
+    }
+    file<<machine_instruction<<endl;
+    return true;
+}
+bool U(string instruction,int &pc,ofstream &file){
+    int i = 0,j = 0;
+    int n = instruction.size();
+    while(j<n && instruction[j]!=' ' && instruction[j]!=','){
+        j++;
+    }
+    if(j==n){
+        return false;
+    }
+    string type = instruction.substr(i,j-i); // type of the intruction
+    while(j<n && (instruction[j]==' '|| instruction[j]==',')){
+        j++;
+    }
+    if(j==n || instruction[j]!='x'){
+        return false; // error
+    }
+    i = ++j;
+    while(j<n && instruction[j]!=' ' && instruction[j]!=','){
+        j++;
+    }
+    if(j==n){
+        return false;
+    }
+    int r = 0;
+    if(!is_int(instruction.substr(i,j-i))){
+        return false;
+    }
+    else{
+        r = stoi(instruction.substr(i,j-i)); // registor
+    }
+    while(j<n && (instruction[j]==' '||instruction[j]==',')){
+        j++;
+    }
+    i = j;
+    while(j<n && instruction[j]!=' ' && instruction[j]!=','){
+        j++;
+    }
+    string label = instruction.substr(i,j-i);
+    bool is_int = true;
+    i = 0;
+    if(label[0]=='-'){
+        i = 1;
+    }
+    for(;i<label.size();i++){
+        int d = label[i]-'0';
+        if(d>9 || d<0){
+            is_int = false;
+            break;
+        }
+    }
+    int imm = 0;
+    if(is_int){
+        imm = stoi(label);
+    }
+    else{
+        if(labels.find(label)==labels.end()){
+            return false;
+        }
+        else{
+            imm = (labels[label]-pc)<<2;
+        }
+    }
+    if(r>31 || imm>2047 || imm <-2048){
+        return false; // error
+    }
+    string opcode = "0010111";
+    if(type == "lui"){
+        opcode = "0110111";
+    }
+    bitset<32> machine_code(opcode);
+    bitset<5> rd(r);
+    bitset<20> im(imm);
+    for(int i=7;i<12;i++){
+        machine_code[i]=rd[i-7];
+    }
+    for(int i=12;i<32;i++){
+        machine_code[i]=im[i-12];
+    }
+    string machine_instruction = "0x";
+    int sum = 0;
+    for(int i=31;i>=0;i--){
+        sum = 2*sum+machine_code[i];
+        if(i%4==0){
+            machine_instruction += convert(sum);
+            sum=0;
+        }
+    }
+    file<<machine_instruction<<endl;
+    return true;
+}
+bool UJ(string instruction,int &pc,ofstream &file){
+    int i = 0,j = 0;
+    int n = instruction.size();
+    while(j<n && instruction[j]!=' ' && instruction[j]!=','){
+        j++;
+    }
+    if(j==n){
+        return false;
+    }
+    string type = instruction.substr(i,j-i); // type of the intruction
+    while(j<n && (instruction[j]==' '|| instruction[j]==',')){
+        j++;
+    }
+    if(j==n || instruction[j]!='x'){
+        return false; // error
+    }
+    i = ++j;
+    while(j<n && instruction[j]!=' ' && instruction[j]!=','){
+        j++;
+    }
+    int r = 0;
+    if(!is_int(instruction.substr(i,j-i))){
+        return false;
+    }
+    else{
+        r = stoi(instruction.substr(i,j-i)); // registor
+    }
+    while(j<n && (instruction[j]==' '||instruction[j]==',')){
+        j++;
+    }
+    i = j;
+    while(j<n && instruction[j]!=' ' && instruction[j]!=','){
+        j++;
+    }
+    string label = instruction.substr(i,j-i);
+    bool is_int = true;
+    i = 0;
+    if(label[0]=='-'){
+        i = 1;
+    }
+    for(;i<label.size();i++){
+        int d = label[i]-'0';
+        if(d>9 || d<0){
+            is_int = false;
+            break;
+        }
+    }
+    int imm = 0;
+    if(is_int){
+        imm = stoi(label);
+    }
+    else{
+        if(labels.find(label)==labels.end()){
+            return false;
+        }
+        else{
+            imm = (labels[label]-pc)<<2;
+        }
+    }
+    if(r>31 || imm>2047 || imm <-2048){
+        return false; // error
+    }
+    string opcode = "1101111";
+    bitset<32> machine_code(opcode);
+    bitset<5> rd(r);
+    bitset<21> im(imm);
+    // file<<im<<" doihf\n";
+    for(int i=7;i<12;i++){
+        machine_code[i]=rd[i-7];
+    }
+    for(int i=12;i<20;i++){
+        machine_code[i]=im[i];
+    }
+    machine_code[20] = im[11];
+    for(int i=21;i<31;i++){
+        machine_code[i] = im[i-20];
+    }
+    machine_code[31] = im[20];
+    string machine_instruction = "0x";
+    int sum = 0;
+    for(int i=31;i>=0;i--){
+        sum = 2*sum+machine_code[i];
+        if(i%4==0){
+            machine_instruction += convert(sum);
+            sum=0;
+        }
+    }
+    file<<machine_instruction<<endl;
+    return true;
+}
+void typeInitialization(){  // initializes the type of every instruction
+    typeOfInstruction["sb"] = "S";
+    typeOfInstruction["sh"] = "S";
+    typeOfInstruction["sw"] = "S";
+    typeOfInstruction["sd"] = "S";
+
+    typeOfInstruction["addi"] = "I";
+    typeOfInstruction["andi"] = "I";
+    typeOfInstruction["ori"] = "I";
+    typeOfInstruction["lb"] = "I";
+    typeOfInstruction["lh"] = "I";
+    typeOfInstruction["lw"] = "I";
+    typeOfInstruction["ld"] = "I"; 
+    typeOfInstruction["jalr"] = "I"; 
+    
+    typeOfInstruction["add"] = "R"; 
+    typeOfInstruction["and"] = "R"; 
+    typeOfInstruction["or"] = "R"; 
+    typeOfInstruction["sll"] = "R"; 
+    typeOfInstruction["slt"] = "R"; 
+    typeOfInstruction["sra"] = "R"; 
+    typeOfInstruction["srl"] = "R"; 
+    typeOfInstruction["sub"] = "R"; 
+    typeOfInstruction["xor"] = "R"; 
+    typeOfInstruction["mul"] = "R"; 
+    typeOfInstruction["div"] = "R"; 
+    typeOfInstruction["rem"] = "R"; 
+
+    typeOfInstruction["beq"] = "SB";
+    typeOfInstruction["blt"] = "SB";
+    typeOfInstruction["bge"] = "SB";
+    typeOfInstruction["bne"] = "SB";
+    typeOfInstruction["auipc"] = "U";
+    typeOfInstruction["lui"] = "U";
+    typeOfInstruction["jal"] = "UJ";
+}
+vector<int> stack;
+int top = -1;
+string to_hex(int n){
+    string ans = "";
+    while(n){
+        int r = n%16;
+        ans = convert(r)+ans;
+        n/=16;
+    }
+    if(ans=="") ans = "0";
+    ans = "0x"+ans;
+    return ans;
+}
+bool toMachineCode(ofstream &file){
+    vector<int> error;
+    vector<string> error_instructions;
+    int pc = 0;
+    while(instructions[pc]!="eof"){
+        file<<to_hex(pc<<2)<<" - ";
+        string cur_instruction = instructions[pc];
+        int i=0;
+        while(i<cur_instruction.length() && cur_instruction[i]!=' ' && cur_instruction[i]!=','){
+            i++;
+        }
+        string type = cur_instruction.substr(0,i);
+        type = typeOfInstruction[type];
+        bool b = true;
+        if(type == "R"){
+            b = R(cur_instruction,file);
+        }
+        else if(type == "I"){
+            b = I(cur_instruction,file);
+        }
+        else if(type == "S"){
+            b = S(cur_instruction,file);
+        }
+        else if(type == "SB"){
+            b = SB(cur_instruction,pc,file);
+        }
+        else if(type == "U"){
+            b = U(cur_instruction,pc,file);
+        }
+        else if(type == "UJ"){
+            b = UJ(cur_instruction,pc,file);
+        }
+        else if (type== "label"){
+            // label
+        } 
+        else{
+            b = 0;
+        }
+        if(!b){
+            error.push_back(pc);
+            error_instructions.push_back(cur_instruction);
+        }
+        pc++;
+    }
+    if(!error.empty()){
+        file.close();
+        file.open("machine_code.mc",ios::trunc);
+        file.close();
+        file.open("machine_code.mc",ios::app);
+        file << "Errors: "<<endl;
+        for(int i=0;i<error.size();i++){
+            file<<to_hex(error[i]<<2)<<" - "<<error_instructions[i]<<endl;
+        }
+        // for(auto i:error){
+        //     cout<<i<<" ";
+        // }
+        cout<<endl;
+        file.close();
+        return false;
+    }
+    return true;
+}
+int d = 0;
+int main(){
+    ofstream ofile;
+    ofile.open("machine_code.mc",ios::trunc);
+    ofile.close();
+    ofile.open("machine_code.mc",ios::app);
+    typeInitialization();
+    x[0]=0;
+    ifstream file;
+    file.open("input.asm");
+    if(!file){
+        cerr<<"Error in opening file"<<endl;
+        return 0;
+    }
+    string line;
+    int c = 0;
+    bool f = 0;
+    while(getline(file,line)){
+        int j = 0;
+        while(j<line.length() && line[j]!='#'){
+            j++;
+        }
+        if(j!=line.length()){
+            line = line.substr(0,j);
+        }
+        int i=0;
+        while(i<line.length() && (line[i]==' '||line[i] ==',')){
+            i++;
+        }
+        line = line.substr(i,line.length()-i); // removing the leading white spaces
+        if(line=="") continue;
+        i = line.length()-1;
+        while(i>=0 && (line[i]==' ' || line[i]==',')){
+            i--;
+        }
+        line = line.substr(0,i+1); // removing spaces at last
+        if(f && line!=".text"){
+            //.word,.byte,.half,.dword,.asciiz
+            int j = 0;
+            int n = line.length();
+            while(j<n && line[j]!=' ' && line[j]!=','){
+                j++;
+            }
+            if(line[j-1]==':'){
+                if(j==n){
+                    continue;
+                }
+                while(j<n && (line[j]==' ' ||line[j]==',')){
+                    j++;
+                }
+                line = line.substr(j,n-j);
+            }
+            n = line.length();
+            j = 0;
+            while(j<n && line[j]!=' ' && line[j]!=','){
+                j++;
+            }
+            string data_type = line.substr(0,j);
+            int k = j;
+            while(k<n && (line[k]==' ' || line[k]==',')){
+                k++;
+            }
+            if(line[k]=='"'){
+                // asciiz
+                string str = "";
+                k++;
+                while(line[k]!='"'){
+                    str+=line[k];
+                    k++;
+                }
+                // cout<<str<<endl;
+                for(auto c:str){
+                    dataseg[d++] = c;
+                }
+                dataseg[d++] = "\\0";
+            }
+            else{
+                while(j<n){
+                    while(j<n && (line[j]==' ' ||line[j]==',')){
+                        j++;
+                    }
+                    string num = "";
+                    while(j<n && line[j]!=' ' && line[j]!=','){
+                        num+=line[j];
+                        j++;
+                    }
+                    // cout<<num<<" "<<data_type<<" "<<d<<endl;//*******************************
+                    dataseg[d] = num;
+                    if(data_type==".byte"){
+                        d++;
+                    }   
+                    else if(data_type==".half"){
+                        d+=2;
+                    }
+                    else if(data_type==".word"){
+                        d+=4;
+                    }
+                    else if(data_type==".dword"){
+                        d+=8;
+                    }
+                }
+            }
+            continue;
+        }
+        else{
+            f = 0;
+        }
+        if(line==".data"){
+            f = 1;
+            continue;
+        }
+        if(line==".text"){
+            f = 0;
+            continue;
+        }
+        i = 0;
+        while(i<line.length() && line[i]!=' ' && line[i]!=','){
+            i++;
+        }
+        if(line[i-1]==':'){ // checking if the instruction is label
+            labels[line.substr(0,i-1)] = c; 
+            typeOfInstruction[line.substr(0,i)] = "label";
+            if(i!=line.length()){
+                while(i<line.length() && (line[i]==',' || line[i]==' ')){
+                    i++;
+                }
+                line = line.substr(i,line.length()-i);
+            }
+            else{
+                continue;
+            }
+        }
+        instructions.push_back(line);
+        c++;
+    }
+    instructions.push_back("eof");
+    ofile<<"instructions to machine code: \n\n";
+    bool b = toMachineCode(ofile);
+    if(!b){
+        return 0;
+    }
+    ofile<<"\n\ndata segment: \n\n";
+    for(auto i:dataseg){
+        string s = bit_to_hex(bitset<32>(i.first+(1<<28)));
+        ofile<<s<<" - "<<i.second<<endl;
+    }
+    file.close();
+    return 0;
+}
