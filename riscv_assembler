@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <fstream>
+#include <string>
+#include <set>
+#include <bitset>
+#include <sstream>
+#include <algorithm>
+
+using namespace std;
+vector<int> x(32,0); 
+vector<string> instructions;
+map<string,int> labels;
+map<string,string> typeOfInstruction; // key = instruction (add,addi...) ,value = Type (R,I,UJ...)
+map<int,string> dataseg; // key = address of the data segment , value = the value that was stored in the respective data segment  
+bool is_int(string s){
+    bool b = true;
+    int i = 0;
+    if(s[0]=='-'){
+        i = 1;
+    }
+    for(;i<s.length();i++){
+        int d = s[i]-'0';
+        if(d>9 || d<0){
+            b = false;
+            break;
+        }
+    }
+    return b;
+}
+char convert(int n){
+    if(n<10){
+        return (char)(n+'0');
+    }
+    else{
+        return (char)('A'+(n-10));
+    }
+}
+string bit_to_hex(bitset<32> b){
+    string ans = "0x";
+    int sum = 0;
+    for(int i=31;i>=0;i--){
+        sum = 2*sum+b[i];
+        if(i%4==0){
+            ans+=convert(sum);
+            sum = 0;
+        }
+    }
+    return ans;
+}
