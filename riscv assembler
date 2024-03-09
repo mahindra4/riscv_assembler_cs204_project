@@ -8,14 +8,11 @@
 #include <sstream>
 
 using namespace std;
-
-
-
 vector<int> x(32,0); 
 vector<string> instructions;
 map<string,int> labels;
 map<string,string> typeOfInstruction; // key = instruction (add,addi...) ,value = Type (R,I,UJ...)
-// map<string,set<string>> fields; // key = Type (R,I,UJ), value = {opcode,func3,func7,...};  
+map<int,string> dataseg; // key = address of the data segment , value = the value that was stored in the respective data segment  
 char convert(int n){
     if(n<10){
         return (char)(n+'0');
@@ -37,7 +34,7 @@ string bit_to_hex(bitset<32> b){
     return ans;
 }
 
-void I(string s){
+bool I(string s,ofstream &file){
     //labels in immediate values?
     //case sensitive name of instruction?
     string temp=""; //temp string to store concise instruction
@@ -46,8 +43,8 @@ void I(string s){
     bitset<32> machine_code;
     //string binary="";
     int i=0;
-    
-    while(s[i]!=' '){ //string s is containing instruction i.e having indexes with pc
+    int n = s.length();
+    while(i<n && s[i]!=' ' && s[i]!=','){ //string s is containing instruction i.e having indexes with pc
         temp +=s[i];
         i++;
     }
@@ -168,7 +165,7 @@ void I(string s){
         }
         //cout<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     
     if(temp=="andi"){
@@ -181,7 +178,7 @@ void I(string s){
            machine_code[i]= andi_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     if(temp=="ori"){
         bitset<3> ori_f3("110");
@@ -193,7 +190,7 @@ void I(string s){
            machine_code[i]= ori_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     if(temp=="jalr"){
         bitset<3> jalr_f3("000");
@@ -205,7 +202,7 @@ void I(string s){
            machine_code[i]= jalr_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
 
     if(temp=="lb"||temp=="lw"||temp=="ld"||temp=="lh"){
@@ -225,28 +222,28 @@ void I(string s){
             i++;
         }
         //if(imm=''){
-          //  cout<<"error"<<endl;
+          //  file<<"error"<<endl;
             //exit;
         //}
         //convert char of imm to int imm
         int x;
         x = stoi(imm);
         //if(immediate>2047 || immediate<-2047){
-            //cout<<"error"<<endl;
+            //file<<"error"<<endl;
             //exit;
         //}
         bitset<12> immediate(x);
         int y;
          y= stoi(rd);
          //if(y>31 || y<0){
-           //  cout<<"error"<<endl;
+           //  file<<"error"<<endl;
             // exit;
          //}
         bitset<5> dest_reg(y);
         int z;
          z=stoi(rs1);
          //if(z>31 || z<0){
-           //  cout<<"error"<<endl;
+           //  file<<"error"<<endl;
             // exit;
          //}
          bitset<5> source_reg(z);
@@ -281,9 +278,9 @@ void I(string s){
         for(int i=0;i<7;i++){
            machine_code[i]= lb_opcode[i];
         }
-        //cout<<machine_code<<endl;
+        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     
     if(temp=="lh"){
@@ -295,9 +292,9 @@ void I(string s){
         for(int i=0;i<7;i++){
            machine_code[i]= lh_opcode[i];
         }
-        //cout<<machine_code<<endl;
+        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     
     if(temp=="lw"){
@@ -309,9 +306,9 @@ void I(string s){
         for(int i=0;i<7;i++){
            machine_code[i]= lw_opcode[i];
         }
-        //cout<<machine_code<<endl;
+        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     if(temp=="ld"){
         bitset<3> ld_f3("011");
@@ -322,19 +319,20 @@ void I(string s){
         for(int i=0;i<7;i++){
            machine_code[i]= ld_opcode[i];
         }
-        //cout<<machine_code<<endl;
+        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
-        //cout<<machine_code<<endl;
+        //file<<machine_code<<endl;
         //int k = bin_to_dec(machine_code);
-        //cout<<k<<endl;
+        //file<<k<<endl;
         //string p = dec_to_hex(k);
-        //cout<<p<<endl;
+        //file<<p<<endl;
+    return true;
 }
 
 
-void S(string s){
+bool S(string s,ofstream &file){
     string rs1="",rs2="",imm="";
     bitset<32> machine_code;
     
@@ -444,7 +442,7 @@ void S(string s){
             machine_code[i]=sb_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     
     if(temp=="sw"){
@@ -459,7 +457,7 @@ void S(string s){
             machine_code[i]=sw_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     
     if(temp=="sd"){
@@ -474,7 +472,7 @@ void S(string s){
             machine_code[i]=sb_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
     
     if(temp=="sh"){
@@ -489,10 +487,9 @@ void S(string s){
             machine_code[i]=sb_opcode[i];
         }
         string p = bit_to_hex(machine_code);
-        cout<<p<<endl;
+        file<<p<<endl;
     }
-    
-    
+    return true;
 }
 string binaryToHex(const string &binary) {
     bitset<32> machine_code(binary);
@@ -509,7 +506,7 @@ string binaryToHex(const string &binary) {
 }
 
 // Function to convert the r-format instruction to machine code
-void R(string instruction) {
+bool R(string instruction,ofstream &file) {
       //-->creating maps
         map<string, string> opcode;
         map<string, string> func3;
@@ -631,17 +628,10 @@ void R(string instruction) {
     // Convert the binary string to hexadecimal machine code
     string machinecode = binaryToHex(output);
 
-    cout<<machinecode<<endl;
+    file<<machinecode<<endl;
+    return true;
 }
-// char convert(int n){
-//     if(n<10){
-//         return (char)(n+'0');
-//     }
-//     else{
-//         return (char)('A'+(n-10));
-//     }
-// }
-void SB(string instruction,int &pc){
+bool SB(string instruction,int &pc,ofstream &file){
     string opcode = "1100011";
     map<string,string> f3;
     f3["beq"] = "000";
@@ -649,26 +639,54 @@ void SB(string instruction,int &pc){
     f3["blt"] = "100";
     f3["bge"] = "101";
     int i=0,j=0;
+    int n = instruction.size();
     while(j<instruction.size() && (instruction[j]!=' ' && instruction[j]!=',')){
         j++;
     }
     string type = instruction.substr(i,j-i); // type of the instruction ex: beq,blt...
+    if(j==n){
+        return false;
+    }
     while(j<instruction.size() && instruction[j]!='x'){
         j++;
+    }
+    if(j==n){
+        return false;
     }
     i = j+1;
     while(j<instruction.size() && (instruction[j]!=' ' && instruction[j]!=',')){
         j++;
     }
-    int r1 = stoi(instruction.substr(i,j-i)); // registor 1
+    int r1 = 0;
+    try{
+        r1 = stoi(instruction.substr(i,j-i)); // registor 1
+    }
+    catch(...){
+        return false;
+    }
+    if(r1>31 && r1<0){
+        return false;
+    }
     while(j<instruction.size() && instruction[j]!='x'){
         j++;
+    }
+    if(j==n){
+        return false;
     }
     i = j+1;
     while(j<instruction.size() && (instruction[j]!=' ' &&  instruction[j]!=',')){
         j++;
     }
-    int r2 = stoi(instruction.substr(i,j-i)); // registor 2
+    int r2;
+    try{
+        r2 = stoi(instruction.substr(i,j-i)); // registor 2
+    }
+    catch(...){
+        return false;
+    }
+    if(r2>31 && r2<0){
+        return false;
+    }
     j = instruction.size()-1;
     while(j>=0 && (instruction[j]!=' ' && instruction[j]!=',')){
         j--;
@@ -688,9 +706,9 @@ void SB(string instruction,int &pc){
     }
     int offset = (is_int)?stoi(label):(labels[label]-pc)<<2; // offset is calculated by subtracting the pc of the label and pc
 
-    // if(offset>4095 || offset<4096){
-    //     return false
-    // }
+    if(offset>4095 || offset<-4096){
+        return false;
+    }
 
     bitset<32> machine_code(opcode);
     bitset<32> imm(offset);
@@ -722,26 +740,39 @@ void SB(string instruction,int &pc){
             sum=0;
         }
     }
-    cout<<machine_instruction<<endl;
+    file<<machine_instruction<<endl;
+    return true;
 }
-void U(string instruction,int &pc){
+bool U(string instruction,int &pc,ofstream &file){
     int i = 0,j = 0;
     int n = instruction.size();
     while(j<n && instruction[j]!=' ' && instruction[j]!=','){
         j++;
     }
+    if(j==n){
+        return false;
+    }
     string type = instruction.substr(i,j-i); // type of the intruction
     while(j<n && (instruction[j]==' '|| instruction[j]==',')){
         j++;
     }
-    // if(j==n || instruction[j]!='x'){
-    //     return false; // error
-    // }
+    if(j==n || instruction[j]!='x'){
+        return false; // error
+    }
     i = ++j;
     while(j<n && instruction[j]!=' ' && instruction[j]!=','){
         j++;
     }
-    int r = stoi(instruction.substr(i,j-i)); // registor
+    if(j==n){
+        return false;
+    }
+    int r = 0;
+    try{
+        r = stoi(instruction.substr(i,j-i)); // registor
+    }
+    catch(...){
+        return false;
+    }
     while(j<n && (instruction[j]==' '||instruction[j]==',')){
         j++;
     }
@@ -763,9 +794,9 @@ void U(string instruction,int &pc){
         }
     }
     int imm = (is_int)?stoi(label):(labels[label]-pc)<<2; // immediate value
-    // if(r>31 || imm>2047 || imm <-2048){
-    //     return false; // error
-    // }
+    if(r>31 || imm>2047 || imm <-2048){
+        return false; // error
+    }
     string opcode = "0010111";
     if(type == "lui"){
         opcode = "0110111";
@@ -788,26 +819,36 @@ void U(string instruction,int &pc){
             sum=0;
         }
     }
-    cout<<machine_instruction<<endl;
+    file<<machine_instruction<<endl;
+    return true;
 }
-void UJ(string instruction,int &pc){
+bool UJ(string instruction,int &pc,ofstream &file){
     int i = 0,j = 0;
     int n = instruction.size();
     while(j<n && instruction[j]!=' ' && instruction[j]!=','){
         j++;
     }
+    if(j==n){
+        return false;
+    }
     string type = instruction.substr(i,j-i); // type of the intruction
     while(j<n && (instruction[j]==' '|| instruction[j]==',')){
         j++;
     }
-    // if(j==n || instruction[j]!='x'){
-    //     return false; // error
-    // }
+    if(j==n || instruction[j]!='x'){
+        return false; // error
+    }
     i = ++j;
     while(j<n && instruction[j]!=' ' && instruction[j]!=','){
         j++;
     }
-    int r = stoi(instruction.substr(i,j-i)); // registor
+    int r;
+    try{
+        r = stoi(instruction.substr(i,j-i)); // registor
+    }
+    catch(...){
+        return false;
+    }
     while(j<n && (instruction[j]==' '||instruction[j]==',')){
         j++;
     }
@@ -829,14 +870,14 @@ void UJ(string instruction,int &pc){
         }
     }
     int imm = (is_int)?stoi(label):(labels[label]-pc)<<2; // immediate value
-    // if(r>31 || imm>2047 || imm <-2048){
-    //     return false; // error
-    // }
+    if(r>31 || imm>2047 || imm <-2048){
+        return false; // error
+    }
     string opcode = "1101111";
     bitset<32> machine_code(opcode);
     bitset<5> rd(r);
     bitset<21> im(imm);
-    // cout<<im<<" doihf\n";
+    // file<<im<<" doihf\n";
     for(int i=7;i<12;i++){
         machine_code[i]=rd[i-7];
     }
@@ -857,7 +898,8 @@ void UJ(string instruction,int &pc){
             sum=0;
         }
     }
-    cout<<machine_instruction<<endl;
+    file<<machine_instruction<<endl;
+    return true;
 }
 void typeInitialization(){  // initializes the type of every instruction
     typeOfInstruction["sb"] = "S";
@@ -908,42 +950,72 @@ string to_hex(int n){
     ans = "0x"+ans;
     return ans;
 }
-void toMachineCode(){
+bool toMachineCode(ofstream &file){
+    vector<int> error;
     int pc = 0;
     while(instructions[pc]!="eof"){
-        cout<<to_hex(pc<<2)<<" - ";
+        file<<to_hex(pc<<2)<<" - ";
         string cur_instruction = instructions[pc];
         int i=0;
-        while(i<cur_instruction.length() && cur_instruction[i]!=' '){
+        while(i<cur_instruction.length() && cur_instruction[i]!=' ' && cur_instruction[i]!=','){
             i++;
         }
         string type = cur_instruction.substr(0,i);
         type = typeOfInstruction[type];
+        bool b = true;
         if(type == "R"){
-            R(cur_instruction);
+            b = R(cur_instruction,file);
         }
         else if(type == "I"){
-            I(cur_instruction);
+            b = I(cur_instruction,file);
         }
         else if(type == "S"){
-            S(cur_instruction);
+            b = S(cur_instruction,file);
         }
         else if(type == "SB"){
-            SB(cur_instruction,pc);
+            b = SB(cur_instruction,pc,file);
         }
         else if(type == "U"){
-            U(cur_instruction,pc);
+            b = U(cur_instruction,pc,file);
         }
         else if(type == "UJ"){
-            UJ(cur_instruction,pc);
+            b = UJ(cur_instruction,pc,file);
         }
-        else{
+        else if (type== "label"){
             // label
         } 
+        else{
+            b = 0;
+        }
+        if(!b){
+            error.push_back(pc);
+        }
         pc++;
     }
+    if(!error.empty()){
+        file.close();
+        file.open("machine_code.mc",ios::trunc);
+        file.close();
+        file.open("machine_code.mc",ios::app);
+        file << "Errors: "<<endl;
+        for(auto i:error){
+            file<<to_hex(i<<2)<<endl;
+        }
+        // for(auto i:error){
+        //     cout<<i<<" ";
+        // }
+        cout<<endl;
+        file.close();
+        return false;
+    }
+    return true;
 }
+int d = 0;
 int main(){
+    ofstream ofile;
+    ofile.open("machine_code.mc",ios::trunc);
+    ofile.close();
+    ofile.open("machine_code.mc",ios::app);
     typeInitialization();
     x[0]=0;
     ifstream file;
@@ -954,7 +1026,15 @@ int main(){
     }
     string line;
     int c = 0;
+    bool f = 0;
     while(getline(file,line)){
+        int j = 0;
+        while(j<line.length() && line[j]!='#'){
+            j++;
+        }
+        if(j!=line.length()){
+            line = line.substr(0,j);
+        }
         int i=0;
         while(i<line.length() && (line[i]==' '||line[i] ==',')){
             i++;
@@ -965,7 +1045,86 @@ int main(){
         while(i>=0 && (line[i]==' ' || line[i]==',')){
             i--;
         }
-        line = line.substr(0,i+1);
+        line = line.substr(0,i+1); // removing spaces at last
+        if(f && line!=".text"){
+            //.word,.byte,.half,.dword,.asciiz
+            int j = 0;
+            int n = line.length();
+            while(j<n && line[j]!=' ' && line[j]!=','){
+                j++;
+            }
+            if(line[j-1]==':'){
+                if(j==n){
+                    continue;
+                }
+                while(j<n && (line[j]==' ' ||line[j]==',')){
+                    j++;
+                }
+                line = line.substr(j,n-j);
+            }
+            n = line.length();
+            j = 0;
+            while(j<n && line[j]!=' ' && line[j]!=','){
+                j++;
+            }
+            string data_type = line.substr(0,j);
+            int k = j;
+            while(k<n && (line[k]==' ' || line[k]==',')){
+                k++;
+            }
+            if(line[k]=='"'){
+                // asciiz
+                string str = "";
+                k++;
+                while(line[k]!='"'){
+                    str+=line[k];
+                    k++;
+                }
+                // cout<<str<<endl;
+                for(auto c:str){
+                    dataseg[d++] = c;
+                }
+                dataseg[d++] = "\\0";
+            }
+            else{
+                while(j<n){
+                    while(j<n && (line[j]==' ' ||line[j]==',')){
+                        j++;
+                    }
+                    string num = "";
+                    while(j<n && line[j]!=' ' && line[j]!=','){
+                        num+=line[j];
+                        j++;
+                    }
+                    // cout<<num<<" "<<data_type<<" "<<d<<endl;//*******************************
+                    dataseg[d] = num;
+                    if(data_type==".byte"){
+                        d++;
+                    }   
+                    else if(data_type==".half"){
+                        d+=2;
+                    }
+                    else if(data_type==".word"){
+                        d+=4;
+                    }
+                    else if(data_type==".dword"){
+                        d+=8;
+                    }
+                }
+            }
+            continue;
+        }
+        else{
+            f = 0;
+        }
+        if(line==".data"){
+            f = 1;
+            continue;
+        }
+        if(line==".text"){
+            f = 0;
+            continue;
+        }
         i = 0;
         while(i<line.length() && line[i]!=' ' && line[i]!=','){
             i++;
@@ -987,9 +1146,16 @@ int main(){
         c++;
     }
     instructions.push_back("eof");
-    // for(auto i:instructions){
-    //     cout<<i<<endl;
-    // }
-    toMachineCode();
+    ofile<<"instructions to machine code: \n\n";
+    bool b = toMachineCode(ofile);
+    if(!b){
+        return 0;
+    }
+    ofile<<"\n\ndata segment: \n\n";
+    for(auto i:dataseg){
+        string s = bit_to_hex(bitset<32>(i.first+(1<<28)));
+        ofile<<s<<" - "<<i.second<<endl;
+    }
+    file.close();
     return 0;
 }
