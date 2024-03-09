@@ -360,6 +360,19 @@ bool I(string s,ofstream &file){
         //file<<p<<endl;
     return true;
 }
+string binaryToHex(const string &binary) {
+    bitset<32> machine_code(binary);
+    string machine_instruction = "0x";
+    int sum = 0;
+    for(int i=31;i>=0;i--){
+        sum = 2*sum+machine_code[i];
+        if(i%4==0){
+            machine_instruction += convert(sum);
+            sum=0;
+        }
+    }
+    return machine_instruction;
+}
 // Function to convert the r-format instruction to machine code
 bool R(string instruction,ofstream &file) {
     //-->creating maps
