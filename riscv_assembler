@@ -531,6 +531,8 @@ string binaryToHex(const string &binary) {
     return machine_instruction;
 }
 // Function to convert the r-format instruction to machine code
+//------------************************************************************************------------------------------------>
+
 bool R(string instruction,ofstream &file) {
     //-->creating maps
     map<string, string> opcode;
@@ -610,7 +612,7 @@ bool R(string instruction,ofstream &file) {
     int size = instruction.size();
     int register1, register2, destination;
     bool foul1,foul2,foul3;
-
+//----------->extract different parameter in the instruction================================</ 
     while (j < size && (instruction[j] == ' ' || instruction[j] == ',')) {
         j++;
     }
@@ -687,16 +689,21 @@ bool R(string instruction,ofstream &file) {
 
     instructionmap["operator"] = oper;
 
-    //============> Convert register numbers to bitsets
+    //============> Convert register numbers to bitsets================================</
+
+
+
     bitset<5> a1(register1);
     bitset<5> a2(register2);
     bitset<5> a3(destination);
 
-    // Concatenate all the strings to form a binary string
+    //====================> Concatenate all the strings to form a binary string============================</
     string output = func7[oper] + a2.to_string() + a1.to_string() + func3[oper] + a3.to_string() + opcode[oper];
 
-    // Convert the binary string to hexadecimal machine code
-   
+    // Convert the binary string to hexadecimal machine code*****************************/
+
+
+   //===============================>checking if it passes all the error detections==============</
     if(!(foul1 &&foul2 &&foul3)){
         return false;
     }
@@ -705,7 +712,7 @@ bool R(string instruction,ofstream &file) {
     file<<machinecode<<endl;
 
     return true;
-}
+}//**********************************************
 
 bool SB(string instruction,int &pc,ofstream &file){ 
     string opcode = "1100011";
