@@ -9,12 +9,11 @@
 #include <algorithm>
 
 using namespace std;
-vector<int> x(32,0); 
-vector<string> instructions;
-map<string,int> labels;
+vector<string> instructions; // stores the instructions
+map<string,int> labels; // key = label , value = its pc value
 map<string,string> typeOfInstruction; // key = instruction (add,addi...) ,value = Type (R,I,UJ...)
 map<int,string> dataseg; // key = address of the data segment , value = the value that was stored in the respective data segment  
-bool is_int(string s){
+bool is_int(string s){ // checks if the string is int or not
     bool b = true;
     int i = 0;
     if(s[0]=='-'){
@@ -29,7 +28,7 @@ bool is_int(string s){
     }
     return b;
 }
-char convert(int n){
+char convert(int n){ // used for converting the number into appropriate digit in the hexadecimal representation
     if(n<10){
         return (char)(n+'0');
     }
@@ -37,7 +36,7 @@ char convert(int n){
         return (char)('A'+(n-10));
     }
 }
-string bit_to_hex(bitset<32> b){
+string bit_to_hex(bitset<32> b){ // converts the bitset to hexadecimal
     string ans = "0x";
     int sum = 0;
     for(int i=31;i>=0;i--){
@@ -708,7 +707,7 @@ bool R(string instruction,ofstream &file) {
     return true;
 }
 
-bool SB(string instruction,int &pc,ofstream &file){
+bool SB(string instruction,int &pc,ofstream &file){ 
     string opcode = "1100011";
     map<string,string> f3;
     f3["beq"] = "000";
@@ -720,12 +719,12 @@ bool SB(string instruction,int &pc,ofstream &file){
     while(j<instruction.size() && (instruction[j]!=' ' && instruction[j]!=',')){
         j++;
     }
-    string type = instruction.substr(i,j-i); // type of the instruction ex: beq,blt...
+    string type = instruction.substr(i,j-i);            // type of the instruction ex: beq,blt...
     if(j==n){
         return false;
     }
     while(j<instruction.size() && instruction[j]!='x'){
-        if(instruction[j]!=' ' && instruction[j]!=','){
+        if(instruction[j]!=' ' && instruction[j]!=','){ 
             return false;
         }
         j++;
@@ -738,7 +737,7 @@ bool SB(string instruction,int &pc,ofstream &file){
         j++;
     }
     if(!is_int(instruction.substr(i,j-i))) return false;
-    int r1 = stoi(instruction.substr(i,j-i)); // registor 1
+    int r1 = stoi(instruction.substr(i,j-i));           // registor 1
     if(r1>31 && r1<0){
         return false;
     }
@@ -756,7 +755,7 @@ bool SB(string instruction,int &pc,ofstream &file){
         j++;
     }
     if(!is_int(instruction.substr(i,j-i))) return false;
-    int r2 = stoi(instruction.substr(i,j-i)); // registor 2
+    int r2 = stoi(instruction.substr(i,j-i));           // registor 2
     if(r2>31 && r2<0){
         return false;
     }
@@ -793,7 +792,7 @@ bool SB(string instruction,int &pc,ofstream &file){
     if(offset>4095 || offset<-4096){
         return false;
     }
-
+    // till this point i extracted every field and checked for some errors 
     bitset<32> machine_code(opcode);
     bitset<32> imm(offset);
     machine_code[7] = imm[11];
@@ -824,9 +823,13 @@ bool SB(string instruction,int &pc,ofstream &file){
             sum=0;
         }
     }
+    // i kept the fields at the appropriate locations 
     file<<machine_instruction<<endl;
-    return true;
+    return true; // if there is no error in this it will return true 
 }
+
+// ********************************* U FORMAT **********************************************
+
 bool U(string instruction,int &pc,ofstream &file){
     int i = 0,j = 0;
     int n = instruction.size();
@@ -836,12 +839,12 @@ bool U(string instruction,int &pc,ofstream &file){
     if(j==n){
         return false;
     }
-    string type = instruction.substr(i,j-i); // type of the intruction
+    string type = instruction.substr(i,j-i);        // type of the intruction
     while(j<n && (instruction[j]==' '|| instruction[j]==',')){
         j++;
     }
     if(j==n || instruction[j]!='x'){
-        return false; // error
+        return false;                               // error
     }
     i = ++j;
     while(j<n && instruction[j]!=' ' && instruction[j]!=','){
@@ -855,7 +858,7 @@ bool U(string instruction,int &pc,ofstream &file){
         return false;
     }
     else{
-        r = stoi(instruction.substr(i,j-i)); // registor
+        r = stoi(instruction.substr(i,j-i));        // registor
     }
     while(j<n && (instruction[j]==' '||instruction[j]==',')){
         j++;
@@ -890,12 +893,15 @@ bool U(string instruction,int &pc,ofstream &file){
         }
     }
     if(r>31 || imm>2047 || imm <-2048){
-        return false; // error
+        return false;                           // error
     }
     string opcode = "0010111";
     if(type == "lui"){
         opcode = "0110111";
     }
+
+    // till this point i extracted every field and checked for some errors 
+
     bitset<32> machine_code(opcode);
     bitset<5> rd(r);
     bitset<20> im(imm);
@@ -914,9 +920,15 @@ bool U(string instruction,int &pc,ofstream &file){
             sum=0;
         }
     }
+
+    // i kept the fields at the appropriate locations 
+    
     file<<machine_instruction<<endl;
-    return true;
+    return true;    // if there is no error in this it will return true 
 }
+
+// *********************************** UJ FORMAT ****************************************
+
 bool UJ(string instruction,int &pc,ofstream &file){
     int i = 0,j = 0;
     int n = instruction.size();
@@ -926,12 +938,12 @@ bool UJ(string instruction,int &pc,ofstream &file){
     if(j==n){
         return false;
     }
-    string type = instruction.substr(i,j-i); // type of the intruction
+    string type = instruction.substr(i,j-i);        // type of the intruction
     while(j<n && (instruction[j]==' '|| instruction[j]==',')){
         j++;
     }
     if(j==n || instruction[j]!='x'){
-        return false; // error
+        return false;   // error
     }
     i = ++j;
     while(j<n && instruction[j]!=' ' && instruction[j]!=','){
@@ -942,7 +954,7 @@ bool UJ(string instruction,int &pc,ofstream &file){
         return false;
     }
     else{
-        r = stoi(instruction.substr(i,j-i)); // registor
+        r = stoi(instruction.substr(i,j-i));        // registor
     }
     while(j<n && (instruction[j]==' '||instruction[j]==',')){
         j++;
@@ -977,13 +989,15 @@ bool UJ(string instruction,int &pc,ofstream &file){
         }
     }
     if(r>31 || imm>2047 || imm <-2048){
-        return false; // error
+        return false;       // error
     }
     string opcode = "1101111";
     bitset<32> machine_code(opcode);
     bitset<5> rd(r);
     bitset<21> im(imm);
-    // file<<im<<" doihf\n";
+    
+    //  till this point i extracted every field and checked for some errors 
+    
     for(int i=7;i<12;i++){
         machine_code[i]=rd[i-7];
     }
@@ -1004,8 +1018,11 @@ bool UJ(string instruction,int &pc,ofstream &file){
             sum=0;
         }
     }
+
+    // i kept the fields at the appropriate locations 
+
     file<<machine_instruction<<endl;
-    return true;
+    return true; // if there is no error in this it will return true
 }
 void typeInitialization(){  // initializes the type of every instruction
     typeOfInstruction["sb"] = "S";
@@ -1043,10 +1060,8 @@ void typeInitialization(){  // initializes the type of every instruction
     typeOfInstruction["lui"] = "U";
     typeOfInstruction["jal"] = "UJ";
 }
-vector<int> stack;
-int top = -1;
-string to_hex(int n){
-    string ans = "";
+string to_hex(int n){ // takes a integer as a input and converts it into the hexadecimal
+    string ans = ""; 
     while(n){
         int r = n%16;
         ans = convert(r)+ans;
@@ -1056,11 +1071,11 @@ string to_hex(int n){
     ans = "0x"+ans;
     return ans;
 }
-bool toMachineCode(ofstream &file){
-    vector<int> error;
-    vector<string> error_instructions;
-    int pc = 0;
-    while(instructions[pc]!="eof"){
+bool toMachineCode(ofstream &file){ // this function iterates through every function and extracts the type and call the appropriate function
+    vector<int> error; // if there is an error then its pc will be stored in this vector
+    vector<string> error_instructions; // if there is an error then the instruction will be stored in this vector
+    int pc = 0; 
+    while(instructions[pc]!="eof"){ // iterates through every instruction till it finds the end of file - "eof"
         file<<to_hex(pc<<2)<<" - ";
         string cur_instruction = instructions[pc];
         int i=0;
@@ -1069,7 +1084,7 @@ bool toMachineCode(ofstream &file){
         }
         string type = cur_instruction.substr(0,i);
         type = typeOfInstruction[type];
-        bool b = true;
+        bool b = true; // this is for indicating whether an instruction contain error or not
         if(type == "R"){
             b = R(cur_instruction,file);
         }
@@ -1100,7 +1115,7 @@ bool toMachineCode(ofstream &file){
         }
         pc++;
     }
-    if(!error.empty()){
+    if(!error.empty()){ // if there is an error then if will be written in the machine code file 
         file.close();
         file.open("machine_code.mc",ios::trunc);
         file.close();
@@ -1109,9 +1124,6 @@ bool toMachineCode(ofstream &file){
         for(int i=0;i<error.size();i++){
             file<<to_hex(error[i]<<2)<<" - "<<error_instructions[i]<<endl;
         }
-        // for(auto i:error){
-        //     cout<<i<<" ";
-        // }
         cout<<endl;
         file.close();
         return false;
@@ -1121,11 +1133,10 @@ bool toMachineCode(ofstream &file){
 int d = 0;
 int main(){
     ofstream ofile;
-    ofile.open("machine_code.mc",ios::trunc);
+    ofile.open("machine_code.mc",ios::trunc); // removing any contents of the file if present at the start of the program
     ofile.close();
     ofile.open("machine_code.mc",ios::app);
     typeInitialization();
-    x[0]=0;
     ifstream file;
     file.open("input.asm");
     if(!file){
@@ -1154,7 +1165,7 @@ int main(){
             i--;
         }
         line = line.substr(0,i+1); // removing spaces at last
-        if(f && line!=".text"){
+        if(f && line!=".text"){ // this is for detecting if we are in the region of the .data
             //.word,.byte,.half,.dword,.asciiz
             int j = 0;
             int n = line.length();
@@ -1188,7 +1199,6 @@ int main(){
                     str+=line[k];
                     k++;
                 }
-                // cout<<str<<endl;
                 for(auto c:str){
                     dataseg[d++] = c;
                 }
