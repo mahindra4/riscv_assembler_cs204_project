@@ -49,27 +49,24 @@ string bit_to_hex(bitset<32> b){
     }
     return ans;
 }
-
+                                                                                //I FORMAT
 bool I(string s,ofstream &file){
-    //labels in immediate values?
-    //case sensitive name of instruction?
-    string temp=""; //temp string to store concise instruction
+   
+    string temp=""; //temp string to store the name of the instruction
     
     string rd="",rs1="",imm="";
     bitset<32> machine_code;
-    //string binary="";
     int i=0;
     int n = s.length();
-    while(i<n && s[i]!=' ' && s[i]!=','){ //string s is containing instruction i.e having indexes with pc
-        temp +=s[i];
+    //string s is containing instruction i.e having indexes with pc
+    while(i<n && s[i]!=' ' && s[i]!=','){ 
+        temp +=s[i];//until we hit the first space or comma we move i and add it to temp for name of ins.
         i++;
     }
     if(i==n) return false;
-    //if(temp=="addi" || temp =="andi" || temp=="ori" ||temp=="jalr"){
+    
      while(i<n && s[i]!='x'){
             if(s[i]!=' ' && s[i]!=','){
-               // cout<<s[i]<<" odihf\n";
-                // cout<<1<<endl; 
                 return false;
             }
             
@@ -78,40 +75,37 @@ bool I(string s,ofstream &file){
         if(i==n) return false;
         i++;
         while(i<n && s[i]!=' '&& s[i]!=','){
-            rd += s[i];
+            rd += s[i];//add contents of rd from string
             i++;
         }
         if(i==n) return false;
         if(!is_int(rd)){
-            // cout<<2<<endl;
-            return false;
+            return false;//checking if rd is int
         }
         if(temp=="addi" || temp =="andi" || temp=="ori" ||temp=="jalr"){
         while(i<n && s[i]!='x'){
             if(s[i]!=' '&&s[i]!=','){
-                // cout<<3<<endl;
               return false;
             }
-            i++;
+            i++;//move until we hit rs1
         }
         if(i==n) return false;
         i++;
         while(i<n && s[i]!=' '&& s[i]!=','){
             rs1 +=s[i];
-            i++;
+            i++;//copy contents of rs1 from s
         }
         if(i==n) return false;
         if(!is_int(rs1)){
-            // cout<<4<<endl;
-            return false;
+            return false;//checking if rs1 is int 
         }
         while(i<n && s[i]==' '||s[i]==','){
-            i++;
+            i++;//move until we hit the immediate value
         }
         if(i==n) return false;
         while(i<n && s[i]!=' '&&s[i]!=','&&s[i]!='\n'&&s[i]!='\0'){
             imm+=s[i];
-            i++;
+            i++;//copy immediate field into imm
         }
         //convert char of imm to int imm
         bool is_int = true;
@@ -140,25 +134,23 @@ bool I(string s,ofstream &file){
         }
 
         if(x>2047 || x<-2048){
-            // cout<<5<<endl;
             return false;
         }
         bitset<12> immediate(x);
         
         int y;
-         y= stoi(rd);
+        y= stoi(rd);
          
-         if(y>31 || y<0){
-           cout<<6<<endl;
+        if(y>31 || y<0){
            return false;
          }
         bitset<5> dest_reg(y);
+        
         int z;
-         z=stoi(rs1);
-         if(z>31 || z<0){
-            cout<<7<<endl;
+        z=stoi(rs1);
+        if(z>31 || z<0){
            return false;
-         }
+        }
          bitset<5> source_reg(z);
          
          
@@ -186,7 +178,7 @@ bool I(string s,ofstream &file){
         for(int i=0;i<7;i++){
            machine_code[i]= addi_opcode[i];
         }
-        //cout<<machine_code<<endl;
+        
         string p = bit_to_hex(machine_code);
         file<<p<<endl;
     }
@@ -230,34 +222,30 @@ bool I(string s,ofstream &file){
 
     if(temp=="lb"||temp=="lw"||temp=="ld"||temp=="lh"){
         while(i<n && s[i]==' '||s[i]==','){
-            i++;
+            i++;//move until we hit immediate
         }
         if(i==n){
-            cout<<1<<endl;
             return false;
         }
         while(i<n && s[i]!='('&&s[i]!=' '){
             imm += s[i];
-            i++;
+            i++;//copy immediate into imm
         }
         if(i==n){
-            cout<<2<<endl;
             return false;
         }
         while(i<n && s[i]!='x'){
-            i++;
+            i++;//move until we hit rs1
         }
         if(i==n){
-            cout<<3<<endl;
             return false;
         }
         i++;
         while(i<n && s[i]!=')'&&s[i]!=' '&&s[i]!='\n'&&s[i]!='\0'){
             rs1 += s[i];
-            i++;
+            i++;//copy rs1 from s
         }
         if(!is_int(rs1)){
-            cout<<4<<endl;
             return false;
         }
         
@@ -265,21 +253,20 @@ bool I(string s,ofstream &file){
         int x;
         x = stoi(imm);
         if(x>2047 || x<-2048){
-            cout<<5<<endl;
             return false;
         }
         bitset<12> immediate(x);
+        
         int y;
          y= stoi(rd);
          if(y>31 || y<0){
-            cout<<6<<endl;
            return false;
          }
         bitset<5> dest_reg(y);
+        
         int z;
          z=stoi(rs1);
          if(z>31 || z<0){
-            cout<<7<<endl;
            return false;
          }
          bitset<5> source_reg(z);
@@ -308,7 +295,6 @@ bool I(string s,ofstream &file){
         for(int i=0;i<7;i++){
            machine_code[i]= lb_opcode[i];
         }
-        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
         file<<p<<endl;
     }
@@ -322,7 +308,6 @@ bool I(string s,ofstream &file){
         for(int i=0;i<7;i++){
            machine_code[i]= lh_opcode[i];
         }
-        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
         file<<p<<endl;
     }
@@ -336,7 +321,6 @@ bool I(string s,ofstream &file){
         for(int i=0;i<7;i++){
            machine_code[i]= lw_opcode[i];
         }
-        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
         file<<p<<endl;
     }
@@ -349,17 +333,191 @@ bool I(string s,ofstream &file){
         for(int i=0;i<7;i++){
            machine_code[i]= ld_opcode[i];
         }
-        //file<<machine_code<<endl;
         string p = bit_to_hex(machine_code);
         file<<p<<endl;
     }
-        //file<<machine_code<<endl;
-        //int k = bin_to_dec(machine_code);
-        //file<<k<<endl;
-        //string p = dec_to_hex(k);
-        //file<<p<<endl;
     return true;
 }
+
+                                                                                        //S FORMAT
+bool S(string s,ofstream &file){
+    int n = s.length();
+    string rs1="",rs2="",imm="";
+    bitset<32> machine_code;
+    
+    string temp="";
+    int i=0;
+    while(i<n && s[i]!=' '&&s[i]!=','){
+        temp += s[i];
+        i++;//copy name of ins from s
+    }
+    if(i==n){
+        return false;
+    }
+    while(i<n && s[i]!='x'){
+        i++;//move until we hit rs2
+    }
+    if(i==n){
+        return false;
+    }
+    i++;
+    while(i<n && s[i]!=' '&&s[i]!=','){
+        rs2 += s[i];
+        i++;//copy rs2 from s
+    }
+    if(i==n){
+        return false;
+    }
+    if(!is_int(rs2)){
+        return false;
+    }
+    while(i<n && s[i]==' '||s[i]==','||s[i]==')'||s[i]=='('){
+        i++;//move until we hit the immediate
+    }
+    if(i==n){
+        return false;
+    }
+    while(i<n && s[i]!=' '&&s[i]!=','&&s[i]!='('&&s[i]!=')'){
+        imm += s[i];
+        i++;//copying immediate into imm from s
+    }
+    if(i==n){
+        return false;
+    }
+    
+    while(i<n && s[i]!='x'){
+        i++;//move until we hit rs1
+    }
+    if(i==n){
+        return false;
+    }
+    i++;
+    while(i<n && s[i]!=' '&&s[i]!=','&&s[i]!=')'&&s[i]!='('&&s[i]!='\0'&&s[i]!='\n'){
+        rs1 += s[i];
+        i++;//copying rs1 from s
+    }
+    if(!is_int(rs1)){
+        return false;
+    }
+    
+    bool is_int = true;
+    i = 0;
+    if(imm[0]=='-'){
+        i = 1;
+    }
+    for(;i<imm.size();i++){
+        int d = imm[i]-'0';
+        if(d>9 || d<0){
+            is_int = false;
+            break;
+        }
+    }
+    int x = 0;
+    if(is_int){
+        x = stoi(imm);
+    }
+    else{
+        if(labels.find(imm)==labels.end()){
+            return false;
+        }
+        else{
+            x = labels[imm]<<2;
+        }
+    }
+    if(x>2047||x<-2048){
+      return false;
+    }
+    
+    bitset<12> immediate(x);
+    
+    int y=stoi(rs2);
+    if(y>31||y<0){
+        return false;
+    }
+    bitset<5> source_reg(y);
+     
+     int z=stoi(rs1);
+    if(z>31||z<0){
+        return false;
+    }
+    bitset<5> base_reg(z);
+    
+    for(int i=25;i<32;i++){
+        machine_code[i]=immediate[i-20];
+    }
+    for(int i=20;i<25;i++){
+        machine_code[i]=source_reg[i-20];
+    }
+    for(int i=15;i<20;i++){
+        machine_code[i]=base_reg[i-15];
+    }
+    for(int i=7;i<12;i++){
+        machine_code[i]=immediate[i-7];
+    }
+    
+    
+    if(temp=="sb"){
+        bitset<3> sb_f3("000");
+        
+        for(int i=12;i<15;i++){
+            machine_code[i]=sb_f3[i-12];
+        }
+        bitset<7> sb_opcode("0100011");
+        
+        for(int i=0;i<7;i++){
+            machine_code[i]=sb_opcode[i];
+        }
+        string p = bit_to_hex(machine_code);
+        file<<p<<endl;
+    }
+    
+    if(temp=="sw"){
+        bitset<3> sw_f3("010");
+        
+        for(int i=12;i<15;i++){
+            machine_code[i]=sw_f3[i-12];
+        }
+        bitset<7> sw_opcode("0100011");
+        
+        for(int i=0;i<7;i++){
+            machine_code[i]=sw_opcode[i];
+        }
+        string p = bit_to_hex(machine_code);
+        file<<p<<endl;
+    }
+    
+    if(temp=="sd"){
+        bitset<3> sb_f3("011");
+        
+        for(int i=12;i<15;i++){
+            machine_code[i]=sb_f3[i-12];
+        }
+        bitset<7> sb_opcode("0100011");
+        
+        for(int i=0;i<7;i++){
+            machine_code[i]=sb_opcode[i];
+        }
+        string p = bit_to_hex(machine_code);
+        file<<p<<endl;
+    }
+    
+    if(temp=="sh"){
+        bitset<3> sb_f3("001");
+        
+        for(int i=12;i<15;i++){
+            machine_code[i]=sb_f3[i-12];
+        }
+        bitset<7> sb_opcode("0100011");
+        
+        for(int i=0;i<7;i++){
+            machine_code[i]=sb_opcode[i];
+        }
+        string p = bit_to_hex(machine_code);
+        file<<p<<endl;
+    }
+    return true;
+}
+
 string binaryToHex(const string &binary) {
     bitset<32> machine_code(binary);
     string machine_instruction = "0x";
@@ -549,195 +707,6 @@ bool R(string instruction,ofstream &file) {
 
     return true;
 }
-
-bool S(string s,ofstream &file){
-    int n = s.length();
-    string rs1="",rs2="",imm="";
-    bitset<32> machine_code;
-    
-    string temp="";
-    int i=0;
-    //while(s[i]==' '||','){
-      //  i++;
-    //}
-    while(i<n && s[i]!=' '&&s[i]!=','){
-        temp += s[i];
-        i++;
-    }
-    if(i==n){
-            cout<<1<<endl;
-            return false;
-        }
-    while(i<n && s[i]!='x'){
-        i++;
-    }
-    if(i==n){
-            cout<<2<<endl;
-            return false;
-        }
-    i++;
-    while(i<n && s[i]!=' '&&s[i]!=','){
-        rs2 += s[i];
-        i++;
-    }
-    if(i==n){
-            cout<<3<<endl;
-            return false;
-        }
-    if(!is_int(rs2)){
-            return false;
-    }
-    while(i<n && s[i]==' '||s[i]==','||s[i]==')'||s[i]=='('){
-        i++;
-    }
-    if(i==n){
-        cout<<4<<endl;
-        return false;
-    }
-    while(i<n && s[i]!=' '&&s[i]!=','&&s[i]!='('&&s[i]!=')'){
-        imm += s[i];
-        i++;
-    }
-    if(i==n){
-            cout<<5<<endl;
-            return false;
-        }
-    
-    while(i<n && s[i]!='x'){
-        i++;
-    }
-    if(i==n){
-            cout<<6<<endl;
-            return false;
-        }
-    i++;
-    while(i<n && s[i]!=' '&&s[i]!=','&&s[i]!=')'&&s[i]!='('&&s[i]!='\0'&&s[i]!='\n'){
-        rs1 += s[i];
-        i++;
-    }
-    if(!is_int(rs1)){
-            return false;
-    }
-    
-    bool is_int = true;
-    i = 0;
-    if(imm[0]=='-'){
-        i = 1;
-    }
-    for(;i<imm.size();i++){
-        int d = imm[i]-'0';
-        if(d>9 || d<0){
-            is_int = false;
-            break;
-        }
-    }
-    int x = 0;
-    if(is_int){
-        x = stoi(imm);
-    }
-    else{
-        if(labels.find(imm)==labels.end()){
-            return false;
-        }
-        else{
-            x = labels[imm]<<2;
-        }
-    }
-    if(x>2047||x<-2048){
-      return false;
-    }
-    
-    bitset<12> immediate(x);
-    
-    int y=stoi(rs2);
-    if(y>31||y<0){
-        return false;
-    }
-    bitset<5> source_reg(y);
-     
-     int z=stoi(rs1);
-    if(z>31||z<0){
-        return false;
-    }
-    bitset<5> base_reg(z);
-    
-    for(int i=25;i<32;i++){
-        machine_code[i]=immediate[i-20];
-    }
-    for(int i=20;i<25;i++){
-        machine_code[i]=source_reg[i-20];
-    }
-    for(int i=15;i<20;i++){
-        machine_code[i]=base_reg[i-15];
-    }
-    //for(int i=12;i<15;i++) f3
-    for(int i=7;i<12;i++){
-        machine_code[i]=immediate[i-7];
-    }
-    //for(int i=0;i<7;i++)  opcode
-    
-    if(temp=="sb"){
-        bitset<3> sb_f3("000");
-        
-        for(int i=12;i<15;i++){
-            machine_code[i]=sb_f3[i-12];
-        }
-        bitset<7> sb_opcode("0100011");
-        
-        for(int i=0;i<7;i++){
-            machine_code[i]=sb_opcode[i];
-        }
-        string p = bit_to_hex(machine_code);
-        file<<p<<endl;
-    }
-    
-    if(temp=="sw"){
-        bitset<3> sw_f3("010");
-        
-        for(int i=12;i<15;i++){
-            machine_code[i]=sw_f3[i-12];
-        }
-        bitset<7> sw_opcode("0100011");
-        
-        for(int i=0;i<7;i++){
-            machine_code[i]=sw_opcode[i];
-        }
-        string p = bit_to_hex(machine_code);
-        file<<p<<endl;
-    }
-    
-    if(temp=="sd"){
-        bitset<3> sb_f3("011");
-        
-        for(int i=12;i<15;i++){
-            machine_code[i]=sb_f3[i-12];
-        }
-        bitset<7> sb_opcode("0100011");
-        
-        for(int i=0;i<7;i++){
-            machine_code[i]=sb_opcode[i];
-        }
-        string p = bit_to_hex(machine_code);
-        file<<p<<endl;
-    }
-    
-    if(temp=="sh"){
-        bitset<3> sb_f3("001");
-        
-        for(int i=12;i<15;i++){
-            machine_code[i]=sb_f3[i-12];
-        }
-        bitset<7> sb_opcode("0100011");
-        
-        for(int i=0;i<7;i++){
-            machine_code[i]=sb_opcode[i];
-        }
-        string p = bit_to_hex(machine_code);
-        file<<p<<endl;
-    }
-    return true;
-}
-
 
 bool SB(string instruction,int &pc,ofstream &file){
     string opcode = "1100011";
